@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>小游戏</title>
+<style type="text/css">
+#container {
+	height: 300px;
+	width: 300px;
+	border: 1px solid #000;
+	cursor: none;
+}
+</style>
+<script type="text/javascript" src="../page/jquery-1.4.2.js"></script>
+<script type="text/javascript">
+//定义全局变量
+var backgroundForestImg=new Image();//背景图
+var mushroomImg=new Image();//蘑菇
+var bearEyesClosedImg=new Image();
+var speed=2;
+var horizontalSpeed=speed;
+var verticalSpee=-speed;
+var bearAngle=2;
+var ctx;//画布
+var screenWidth;//画布宽度
+var screenHeight;//画布高度
+
+//定义公共游戏对象
+function GameObject(){
+	this.x=0;//x坐标
+	this.y=0;//y坐标
+	this.image=null;//图片
+}
+
+//公共蘑菇
+function Mushroom(){};
+Mushroom.prototype=new GameObject();
+//具体蘑菇
+var mushroom=new Mushroom();
+//熊
+function Animal(){};
+Animal.prototype=new GameObject();
+Animal.prototype.angle=0;
+//熊实例
+var animal=new Animal();
+
+function HasAnimalHitEdge(){
+	//碰到左边界
+	if(animal.x<0){
+		if(horizontalSpeed<0)
+		horizontalSpeed=-horizontalSpeed;
+	}
+	//碰到右边界
+	if(animal.x>screenWidth-animal.image.width){
+		if(horizontalSpeed>0)
+		horizontalSpeed=-horizontalSpeed;
+	}
+	//碰到上边界
+	if(animal.y<0){
+		if(vertivalSpeed<0)
+		verticalSpeed=-verticalSpeed;
+	}
+	//碰到下边界
+	if(animal.y>sceenHeight-animal.image.height){
+		//重新开始
+		setIimeout(function(){
+			horizontalSpeed=speed;
+            verticalSpee=-speed;
+			animal.x=parseInt(screenWidth/2);
+	        animal.y=parseInt(screenHeight/2);
+			gameLoop();
+		},2000);
+	}
+}
+
+//两物碰撞
+function check(object1,object2,overlap){
+	//两物四点的位置
+	A1=object1.x+overlap;
+	B1=object1.x+object1.image.width-overlap;
+	C1=object1.y+overlap;
+	D1=object1.y+object1.image.height-overlap;
+	
+	A2=object2.x+overlap;
+	B2=object2.x+object2.image.width-overlap;
+	C2=object2.y+overlap;
+	D2=object2.y+object2.image.height-overlap;
+	
+	//判断重叠
+	if((A1>A2&&A1<B2)||(B1<A2&&B1<B2)){
+		if((C1>C2&&C1<D2)||(D1>D2&&D1<D2))
+		return true;
+	}
+	return false;
+}
+
+
+//熊撞到蘑菇
+
+function HasAnimalHitMishroom(){
+	if(check(animal,mushroom,5)){
+		//判断碰撞位置进行相应处理
+		
+		//水平速度
+		//最左侧
+		if(animal.x+animal.image.width/2<(mushroom.x+moshroom.image.width*0.25)){
+			horizontalSpeed=-speed;
+		}
+		//左侧中间
+		else if(animal.x+animal.image.width/2<(mushroom.x+moshroom.image.width*0.5)){
+			horizontalSpeed=-speed/2;
+		}
+		//右侧中间
+		else if(animal.x+animal.image.width/2<(mushroom.x+moshroom.image.width*0.75)){
+			horizontalSpeed=speed/2;
+		}
+		//最右侧
+		else{
+			horizontalSpeed=speed;
+		}
+		
+		//垂直速度都往上
+		
+	}
+}
+
+//绘制场景
+function gameLoop(){
+	ctx.clearRect(0,0,screenWidth,screenHeight);//清除屏幕
+	ctx.save();//场景入栈
+	ctx.drawImge(backgroundForestImg,0,0);
+	ctx.drawImge(mushroom.image,mushroom.x,mushroom.y);
+	//使熊移动和
+	animal.x+=horizontalSpeed;
+	animal.y+=verticalSpeed;
+	animal+=bearAngle;
+	//旋转
+	ctx.translate(animal.x+(animal.image.width/2),animal.y+(animal.image.height/2));
+	//角度切换成弧度进行旋转
+	ctx.rotate(animal.angle*Math.PI/180);  
+	ctx.drawImage(aniaml.image,-(animal.image.width/2),-(animal.image.height/2));
+	ctx.restore();//场景出栈
+	HasAnimalHitMushroom();//检测熊是否碰到蘑菇
+	HasAnimalHitEdge();//检测碰撞
+}
+
+//图像加载
+function loadImage(){
+	mushroomImg.src="image/mushroom.png";
+    bachgroundForestImg.src="image/forest1.jpg";
+	bearEyesClosedImg.src="image/bear_eyesclosed.png";//熊图片
+	animal.x=parseInt(screenWidth/2);
+	animal.y=parseInt(screenHeight/2);
+	animal.image=bearEyesClosedImg;
+	mushroom.image=mushroomImg;
+}
+
+//事件监听
+function addEventHandlers(){
+	$("#container").mousemove(function(e){
+		mushroom.x=e.pageX-35;//或mushroom.x=e.pageX-mushroom.image.Width/2;	
+		});
+}
+
+//初始化
+$(window).ready(function() {
+	addEventHandlers()
+    loadImage();//调用图片加载函数
+	ctx=document.getElementById('canvas').getContext('2d');
+    screenWidth=parseInt($("#canvas").attr("width"));//访问ID名为“canvas”的属性width
+    screenHeight=parseInt($("#canvas").attr("height"));
+	mushroom.image=mushroomImg;
+    //初始化蘑菇的位置,原图片的大小为70,40
+    mushroom.x=parseInt(screenWidth/2-35);
+    mushroom.y=parseInt(screenHeight-40);
+	animal.image=bearEyesClosedImg;
+	setInterval(gameLoop,10);//每10毫秒画一次
+	
+	
+});
+
+</script>
+
+</head>
+
+<body>
+<div id="container" style="border:1px solid; cursor:none; width:300px;height:300px">
+<canvas width="300" height="300" id="canvas"></canvas>
+</div>
+</body>
+</html>
